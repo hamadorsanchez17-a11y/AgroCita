@@ -1,5 +1,4 @@
-
-namespace AgroCita.API.Configuration;
+namespace AgroCita.Infrastructure.Services.Security;
 
 public class JwtSettings
 {

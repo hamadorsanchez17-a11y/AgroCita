@@ -1,5 +1,5 @@
 using System.Text;
-using AgroCita.API.Configuration;
+using AgroCita.Infrastructure.Services.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 

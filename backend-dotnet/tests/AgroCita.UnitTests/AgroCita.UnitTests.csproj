@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\AgroCita.Application\AgroCita.Application.csproj" />
     <ProjectReference Include="..\..\src\AgroCita.Domain\AgroCita.Domain.csproj" />
+    <ProjectReference Include="..\..\src\AgroCita.Infrastructure\AgroCita.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

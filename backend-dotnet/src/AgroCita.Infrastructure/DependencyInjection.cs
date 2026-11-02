@@ -3,6 +3,9 @@ using AgroCita.Infrastructure.Persistence.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using AgroCita.Application.Common.Interfaces;
+using AgroCita.Infrastructure.Services.Security;
+
 
 namespace AgroCita.Infrastructure;
 
@@ -23,6 +26,9 @@ public static class DependencyInjection
 
         services.AddDbContext<AgroCitaDbContext>(options =>
             options.UseNpgsql(connectionString));
+
+        services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+        services.AddScoped<IPasswordHashService, PasswordHashService>();
 
         return services;
     }
