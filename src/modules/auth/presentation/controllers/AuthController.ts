@@ -1,9 +1,10 @@
 
 import type { Request, Response } from "express";
 
+import type { AuthenticatedRequest } from "../../../../shared/middlewares/auth.middleware.js";
+
 import { RegisterProducer } from "../../application/use-cases/RegisterProducer.js";
 import { LoginUser } from "../../application/use-cases/LoginUser.js";
-import type {AuthenticatedRequest} from "../../../../shared/middlewares/auth.middleware.js";
 
 import {
   registerProducerSchema,
@@ -16,61 +17,33 @@ export class AuthController {
     private readonly loginUser: LoginUser
   ) {}
 
-  
-  // Obtener los datos del usuario autenticado
-  me = (req: Request, res: Response): void => {
-
-    const authenticatedRequest = req as AuthenticatedRequest;
-    const user = authenticatedRequest.user;
-
-    if (!user) {
-      res.status(401).json({
-        success: false,
-        message: "No se pudo identificar al usuario autenticado."
-      });
-      return;
-    }
-
-    res.status(200).json({
-      success: true,
-      message: "Información del usuario obtenida correctamente.",
-      data: {
-        id: user.sub,
-        empresaId: user.empresaId,
-        rol: user.rol
-      }
-    });
-  };
-
-
-  // Registrar un productor
-  register = async (req: Request, res: Response): Promise<void> => {
+  register = async (
+    req: Request,
+    res: Response
+  ): Promise<void> => {
     const validation = registerProducerSchema.safeParse(req.body);
 
     if (!validation.success) {
       res.status(400).json({
         success: false,
-        message: "Los datos enviados no son válidos.",
-        errors: validation.error.issues.map(issue => ({
-          field: issue.path.join("."),
-          message: issue.message
-        }))
+        message: "Datos de registro inválidos.",
+        errors: validation.error.issues
       });
       return;
     }
 
     try {
-      const input = validation.data;
+      const data = validation.data;
 
       const result = await this.registerProducer.execute({
-        nombreCompleto: input.nombreCompleto,
-        email: input.email,
-        password: input.password,
-        codigoInvitacion: input.codigoInvitacion,
-        dni: input.dni,
-        telefono: input.telefono,
-        ...(input.direccion !== undefined
-          ? { direccion: input.direccion }
+        nombreCompleto: data.nombreCompleto,
+        email: data.email,
+        password: data.password,
+        codigoInvitacion: data.codigoInvitacion,
+        dni: data.dni,
+        telefono: data.telefono,
+        ...(data.direccion !== undefined
+          ? { direccion: data.direccion }
           : {})
       });
 
@@ -79,44 +52,29 @@ export class AuthController {
         message: "Productor registrado correctamente.",
         data: result
       });
-
     } catch (error) {
-      const message = error instanceof Error ? error.message : "";
+      const message = error instanceof Error
+        ? error.message
+        : "Error al registrar el productor.";
 
-      if (
-        message.includes("correo electrónico ya está registrado") ||
-        message.includes("productor con ese DNI")
-      ) {
-        res.status(409).json({ success: false, message });
-        return;
-      }
-
-      if (message.includes("código de invitación")) {
-        res.status(400).json({ success: false, message });
-        return;
-      }
-
-      console.error("Error al registrar productor:", error);
-
-      res.status(500).json({
+      res.status(400).json({
         success: false,
-        message: "Ocurrió un error interno al registrar el productor."
+        message
       });
     }
   };
 
-  // Iniciar sesión
-  login = async (req: Request, res: Response): Promise<void> => {
+  login = async (
+    req: Request,
+    res: Response
+  ): Promise<void> => {
     const validation = loginSchema.safeParse(req.body);
 
     if (!validation.success) {
       res.status(400).json({
         success: false,
-        message: "Los datos enviados no son válidos.",
-        errors: validation.error.issues.map(issue => ({
-          field: issue.path.join("."),
-          message: issue.message
-        }))
+        message: "Datos de inicio de sesión inválidos.",
+        errors: validation.error.issues
       });
       return;
     }
@@ -129,32 +87,45 @@ export class AuthController {
         message: "Inicio de sesión exitoso.",
         data: result
       });
-
     } catch (error) {
-      const message = error instanceof Error ? error.message : "";
+      const message = error instanceof Error
+        ? error.message
+        : "Error al iniciar sesión.";
 
-      if (message === "Credenciales inválidas.") {
-        res.status(401).json({
-          success: false,
-          message
-        });
-        return;
-      }
+      const statusCode = message === "Credenciales inválidas."
+        ? 401
+        : 403;
 
-      if (message === "La cuenta está desactivada.") {
-        res.status(403).json({
-          success: false,
-          message
-        });
-        return;
-      }
-
-      console.error("Error al iniciar sesión:", error);
-
-      res.status(500).json({
+      res.status(statusCode).json({
         success: false,
-        message: "Ocurrió un error interno al iniciar sesión."
+        message
       });
     }
+  };
+
+  me = async (
+    req: Request,
+    res: Response
+  ): Promise<void> => {
+    const authenticatedRequest = req as AuthenticatedRequest;
+    const user = authenticatedRequest.user;
+
+    if (!user) {
+      res.status(401).json({
+        success: false,
+        message: "Se requiere autenticación."
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Usuario autenticado correctamente.",
+      data: {
+        id: user.sub,
+        empresaId: user.empresaId,
+        rol: user.rol
+      }
+    });
   };
 }

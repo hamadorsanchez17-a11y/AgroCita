@@ -5,7 +5,7 @@ import { FarmController } from "../controllers/FarmController.js";
 import { CreateFarm } from "../../application/use-cases/CreateFarm.js";
 import { GetMyFarms } from "../../application/use-cases/GetMyFarms.js";
 
-import { MockFarmRepository } from "../../infrastructure/repositories/MockFarmRepository.js";
+import { farmRepository } from "../../infrastructure/repositories/farmRepositoryInstance.js";
 
 import { GetMyProducerProfile } from "../../../producers/application/use-cases/GetMyProducerProfile.js";
 import { MockProducerRepository } from "../../../producers/infrastructure/repositories/MockProducerRepository.js";
@@ -17,7 +17,7 @@ import { authenticateToken } from "../../../../shared/middlewares/auth.middlewar
 const farmRouter = Router();
 
 // Repositorios
-const farmRepository = new MockFarmRepository();
+
 const producerRepository = new MockProducerRepository();
 
 // Casos de uso
