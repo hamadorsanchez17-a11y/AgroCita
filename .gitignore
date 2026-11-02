@@ -1,11 +1,6 @@
-# Node.js
-node_modules/
-dist/
-
-# Variables de entorno
+# Variables de entorno y secretos
 .env
 .env.*
-!.env.example
 
 # .NET
 **/bin/

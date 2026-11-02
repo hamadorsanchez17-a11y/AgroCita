@@ -1,6 +1,7 @@
 using AgroCita.Infrastructure;
 using AgroCita.Infrastructure.Persistence.Context;
 using AgroCita.API.Extensions;
+using AgroCita.Application.Features.Auth.Login;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
+builder.Services.AddScoped<LoginHandler>();
 
 //Registrar autenticación y autorización JWT
 builder.Services.AddJwtAuthentication(builder.Configuration);

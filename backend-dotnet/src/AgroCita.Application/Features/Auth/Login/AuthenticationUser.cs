@@ -1,6 +1,10 @@
 
 namespace AgroCita.Application.Features.Auth.Login;
 
+/*
+Datos mínimos que se necesitan recuperar
+para autenticar a un usuario.
+*/
 public class AuthenticationUser
 {
     public int Id { get; set; }
