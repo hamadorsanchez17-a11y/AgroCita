@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/AgroCita.API/AgroCita.API.csproj" />
+    <Project Path="src/AgroCita.Application/AgroCita.Application.csproj" />
+    <Project Path="src/AgroCita.Domain/AgroCita.Domain.csproj" />
+    <Project Path="src/AgroCita.Infrastructure/AgroCita.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/AgroCita.IntegrationTests/AgroCita.IntegrationTests.csproj" />
+    <Project Path="tests/AgroCita.UnitTests/AgroCita.UnitTests.csproj" />
+  </Folder>
+</Solution>

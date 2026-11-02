@@ -1,5 +1,22 @@
+# Node.js
 node_modules/
 dist/
+
+# Variables de entorno
 .env
 .env.*
 !.env.example
+
+# .NET
+**/bin/
+**/obj/
+.vs/
+*.user
+*.suo
+
+# Resultados de pruebas
+**/TestResults/
+
+# Archivos temporales del sistema
+.DS_Store
+Thumbs.db
