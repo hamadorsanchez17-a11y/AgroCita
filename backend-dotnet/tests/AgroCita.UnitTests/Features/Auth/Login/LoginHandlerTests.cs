@@ -1,6 +1,7 @@
 
 using AgroCita.Application.Common.Interfaces;
 using AgroCita.Application.Features.Auth.Login;
+using FluentValidation;
 
 namespace AgroCita.UnitTests.Features.Auth.Login;
 
@@ -16,18 +17,21 @@ public class LoginHandlerTests
     private readonly FakeJwtTokenGenerator _jwtTokenGenerator;
     private readonly LoginHandler _handler;
 
-    public LoginHandlerTests()
-    {
-        _repository = new FakeAuthenticationRepository();
-        _passwordHashService = new FakePasswordHashService();
-        _jwtTokenGenerator = new FakeJwtTokenGenerator();
+   public LoginHandlerTests()
+{
+    _repository = new FakeAuthenticationRepository();
+    _passwordHashService = new FakePasswordHashService();
+    _jwtTokenGenerator = new FakeJwtTokenGenerator();
 
-        _handler = new LoginHandler(
-            _repository,
-            _passwordHashService,
-            _jwtTokenGenerator
-        );
-    }
+    IValidator<LoginCommand> validator = new LoginCommandValidator();
+
+    _handler = new LoginHandler(
+        _repository,
+        _passwordHashService,
+        _jwtTokenGenerator,
+        validator
+    );
+}
 
     [Fact]
     public async Task HandleAsync_ShouldReturnToken_WhenCredentialsAreCorrect()
@@ -175,24 +179,20 @@ public class LoginHandlerTests
     }
 
     [Fact]
-    public async Task HandleAsync_ShouldReturnNull_WhenCredentialsAreEmpty()
-    {
-        // Arrange
-        var command = new LoginCommand(
-            "",
-            ""
-        );
+    
+public async Task HandleAsync_ShouldThrowValidationException_WhenCredentialsAreEmpty()
+{
+    // Arrange
+    var command = new LoginCommand("", "");
 
-        // Act
-        var result = await _handler.HandleAsync(command);
+    // Act
+    var exception = await Assert.ThrowsAsync<ValidationException>(
+        async () => await _handler.HandleAsync(command)
+    );
 
-        // Assert
-        Assert.Null(result);
-
-        Assert.False(_repository.GetByEmailWasCalled);
-        Assert.False(_passwordHashService.VerifyWasCalled);
-        Assert.False(_jwtTokenGenerator.GenerateWasCalled);
-    }
+    // Assert
+    Assert.NotEmpty(exception.Errors);
+}
 
     // Objetos simulados para las dependencias del LoginHandler.
 

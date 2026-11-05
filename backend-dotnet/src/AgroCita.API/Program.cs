@@ -1,17 +1,20 @@
+
 using AgroCita.Infrastructure;
 using AgroCita.Infrastructure.Persistence.Context;
+using AgroCita.Application;
 using AgroCita.API.Extensions;
-using AgroCita.Application.Features.Auth.Login;
+using AgroCita.API.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Registrar servicios de la API.
+// Registrar servicios de la aplicación y la infraestructura.
+builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
-builder.Services.AddScoped<LoginHandler>();
 
-//Registrar autenticación y autorización JWT
+// Registrar autenticación y autorización JWT.
 builder.Services.AddJwtAuthentication(builder.Configuration);
 
 var app = builder.Build();
@@ -43,11 +46,12 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-//Autenticar y autorizar solicitudes HTTP
+// Middleware global de excepciones.
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Registrar las rutas de los controladores.
 app.MapControllers();
 
 app.Run();

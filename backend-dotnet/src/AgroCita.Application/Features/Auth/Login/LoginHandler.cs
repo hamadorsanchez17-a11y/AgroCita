@@ -1,34 +1,34 @@
-
 using AgroCita.Application.Common.Interfaces;
+using FluentValidation;
 
 namespace AgroCita.Application.Features.Auth.Login;
 
-//Coordina el proceso de autenticación
 public class LoginHandler
 {
     private readonly IAuthenticationRepository _authenticationRepository;
     private readonly IPasswordHashService _passwordHashService;
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
+    private readonly IValidator<LoginCommand> _validator;
 
     public LoginHandler(
         IAuthenticationRepository authenticationRepository,
         IPasswordHashService passwordHashService,
-        IJwtTokenGenerator jwtTokenGenerator)
+        IJwtTokenGenerator jwtTokenGenerator,
+        IValidator<LoginCommand> validator)
     {
         _authenticationRepository = authenticationRepository;
         _passwordHashService = passwordHashService;
         _jwtTokenGenerator = jwtTokenGenerator;
+        _validator = validator;
     }
 
     public async Task<LoginResult?> HandleAsync(
         LoginCommand command,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(command.Email) ||
-            string.IsNullOrEmpty(command.Password))
-        {
-            return null;
-        }
+        await _validator.ValidateAndThrowAsync(
+            command,
+            cancellationToken);
 
         var email = command.Email.Trim();
 
