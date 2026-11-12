@@ -4,26 +4,90 @@ using AgroCita.Infrastructure.Persistence.Context;
 using AgroCita.Application;
 using AgroCita.API.Extensions;
 using AgroCita.API.Middleware;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Registrar servicios de la aplicación y la infraestructura.
+// Registrar servicios.
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddControllers();
-builder.Services.AddOpenApi();
 
-// Registrar autenticación y autorización JWT.
+// Configuración de OpenAPI y autenticación Bearer.
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer((document, context, cancellationToken) =>
+    {
+        document.Components ??= new Microsoft.OpenApi.OpenApiComponents();
+
+        document.Components.SecuritySchemes ??=
+            new Dictionary<string, Microsoft.OpenApi.IOpenApiSecurityScheme>();
+
+        document.Components.SecuritySchemes["Bearer"] =
+            new Microsoft.OpenApi.OpenApiSecurityScheme
+            {
+                Type = Microsoft.OpenApi.SecuritySchemeType.Http,
+                Scheme = "bearer",
+                BearerFormat = "JWT",
+                Description = "Introduce tu token JWT."
+            };
+
+        return Task.CompletedTask;
+    });
+
+    options.AddOperationTransformer((operation, context, cancellationToken) =>
+    {
+        var requiresAuthorization =
+            context.Description.ActionDescriptor.EndpointMetadata
+                .OfType<Microsoft.AspNetCore.Authorization.IAuthorizeData>()
+                .Any();
+
+        if (requiresAuthorization)
+        {
+            operation.Security ??=
+                new List<Microsoft.OpenApi.OpenApiSecurityRequirement>();
+
+            operation.Security.Add(
+                new Microsoft.OpenApi.OpenApiSecurityRequirement
+                {
+                    {
+                        new Microsoft.OpenApi.OpenApiSecuritySchemeReference(
+                            "Bearer", context.Document),
+                        new List<string>()
+                    }
+                });
+        }
+
+        return Task.CompletedTask;
+    });
+});
+
+// Autenticación JWT.
 builder.Services.AddJwtAuthentication(builder.Configuration);
 
 var app = builder.Build();
 
-// Configurar el pipeline HTTP.
+// Página principal.
+app.MapGet("/", () =>
+{
+    return Results.Ok(new
+    {
+        mensaje = "Bienvenido a AgroCita API",
+        estado = "Funcionando",
+        documentacion = "/scalar",
+        diagnostico = "/api/diagnostics/database"
+    });
+});
+
+// Configuración de desarrollo.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 
+    app.MapScalarApiReference();
+
+    // Diagnóstico de PostgreSQL.
     app.MapGet("/api/diagnostics/database", async (AgroCitaDbContext db) =>
     {
         var canConnect = await db.Database.CanConnectAsync();
@@ -46,7 +110,6 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// Middleware global de excepciones.
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseAuthentication();
@@ -55,3 +118,4 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
