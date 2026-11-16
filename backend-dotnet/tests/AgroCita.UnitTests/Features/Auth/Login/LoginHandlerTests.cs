@@ -242,6 +242,8 @@ public async Task HandleAsync_ShouldThrowValidationException_WhenCredentialsAreE
 
         public bool GenerateWasCalled { get; private set; }
 
+        public int ExpiresInSeconds => 3600;
+
         public string GenerateToken(
             int userId,
             string email,

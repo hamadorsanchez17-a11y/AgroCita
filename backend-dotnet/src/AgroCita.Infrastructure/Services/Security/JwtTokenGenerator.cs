@@ -16,6 +16,8 @@ public class JwtTokenGenerator : IJwtTokenGenerator
         _jwtSettings = jwtOptions.Value;
     }
 
+    public int ExpiresInSeconds => _jwtSettings.ExpirationMinutes * 60;
+
     public string GenerateToken(
         int userId,
         string email,
@@ -24,14 +26,14 @@ public class JwtTokenGenerator : IJwtTokenGenerator
     {
         var claims = new List<Claim>
         {
-            new(ClaimTypes.NameIdentifier, userId.ToString()),
-            new(ClaimTypes.Email, email),
-            new(ClaimTypes.Role, role)
+            new(JwtClaims.UsuarioId, userId.ToString()),
+            new(JwtClaims.Email, email),
+            new(JwtClaims.Rol, role)
         };
 
         if (companyId.HasValue)
         {
-            claims.Add(new Claim("company_id", companyId.Value.ToString()));
+            claims.Add(new Claim(JwtClaims.EmpresaId, companyId.Value.ToString()));
         }
 
         var key = new SymmetricSecurityKey(

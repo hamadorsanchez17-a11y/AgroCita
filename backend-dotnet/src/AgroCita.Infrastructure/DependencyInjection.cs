@@ -1,6 +1,7 @@
 
 using AgroCita.Infrastructure.Persistence.Context;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using AgroCita.Application.Common.Interfaces;
@@ -26,14 +27,23 @@ public static class DependencyInjection
         }
 
         services.AddDbContext<AgroCitaDbContext>(options =>
-            options.UseNpgsql(connectionString));
+            options
+                .UseNpgsql(connectionString, npgsql =>
+                    npgsql.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery))
+                .ConfigureWarnings(warnings => warnings.Ignore(
+                    CoreEventId.PossibleIncorrectRequiredNavigationWithQueryFilterInteractionWarning,
+                    CoreEventId.FirstWithoutOrderByAndFilterWarning,
+                    CoreEventId.RowLimitingOperationWithoutOrderByWarning)));
 
-      services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
-services.AddScoped<IPasswordHashService, PasswordHashService>();
-services.AddScoped<IAuthenticationRepository, AuthenticationRepository>();
+        services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-services.AddHttpContextAccessor();
-services.AddScoped<ICurrentUserService, CurrentUserService>();
+        services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+        services.AddScoped<IPasswordHashService, PasswordHashService>();
+        services.AddScoped<IAuthenticationRepository, AuthenticationRepository>();
+
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
 
         return services;
     }

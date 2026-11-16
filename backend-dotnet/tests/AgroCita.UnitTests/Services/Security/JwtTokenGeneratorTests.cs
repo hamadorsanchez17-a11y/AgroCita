@@ -47,16 +47,16 @@ public class JwtTokenGeneratorTests
 
         // Assert
         Assert.Equal(userId.ToString(),
-            token.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value);
+            token.Claims.First(c => c.Type == JwtClaims.UsuarioId).Value);
 
         Assert.Equal(email,
-            token.Claims.First(c => c.Type == ClaimTypes.Email).Value);
+            token.Claims.First(c => c.Type == JwtClaims.Email).Value);
 
         Assert.Equal(role,
-            token.Claims.First(c => c.Type == ClaimTypes.Role).Value);
+            token.Claims.First(c => c.Type == JwtClaims.Rol).Value);
 
         Assert.Equal(companyId.ToString(),
-            token.Claims.First(c => c.Type == "company_id").Value);
+            token.Claims.First(c => c.Type == JwtClaims.EmpresaId).Value);
     }
 
     [Fact]
@@ -75,7 +75,7 @@ public class JwtTokenGeneratorTests
         // Assert
         Assert.DoesNotContain(
             token.Claims,
-            claim => claim.Type == "company_id");
+            claim => claim.Type == JwtClaims.EmpresaId);
     }
 
     [Fact]
@@ -138,7 +138,7 @@ public class JwtTokenGeneratorTests
             "PRODUCTOR",
             3);
 
-        var handler = new JwtSecurityTokenHandler();
+        var handler = new JwtSecurityTokenHandler { MapInboundClaims = false };
 
         var validationParameters = new TokenValidationParameters
         {
@@ -167,6 +167,6 @@ public class JwtTokenGeneratorTests
         Assert.IsType<JwtSecurityToken>(validatedToken);
         Assert.Equal(
             "15",
-            principal.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            principal.FindFirst(JwtClaims.UsuarioId)?.Value);
     }
 }

@@ -17,17 +17,19 @@ public class AuthenticationRepository : IAuthenticationRepository
         string email,
         CancellationToken cancellationToken = default)
     {
-       return await _context.Users
-    .IgnoreQueryFilters()
-    .AsNoTracking()
+        return await _context.Users
+            .IgnoreQueryFilters()
+            .AsNoTracking()
             .Where(user => user.Email == email)
             .Select(user => new AuthenticationUser
             {
                 Id = user.Id,
+                Nombre = (user.Nombre + " " + user.Apellido).Trim(),
                 Email = user.Email,
                 PasswordHash = user.PasswordHash,
-                Role = user.Rol,
+                Role = user.Rol!.Nombre,
                 CompanyId = user.EmpresaId,
+                CompanyName = user.Empresa != null ? user.Empresa.Nombre : null,
                 IsActive = user.Activo
             })
             .FirstOrDefaultAsync(cancellationToken);

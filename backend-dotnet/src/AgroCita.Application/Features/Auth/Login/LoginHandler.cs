@@ -30,7 +30,7 @@ public class LoginHandler
             command,
             cancellationToken);
 
-        var email = command.Email.Trim();
+        var email = command.Email.Trim().ToLowerInvariant();
 
         var user = await _authenticationRepository.GetByEmailAsync(
             email,
@@ -56,6 +56,15 @@ public class LoginHandler
             user.Role,
             user.CompanyId);
 
-        return new LoginResult(token);
+        return new LoginResult(
+            token,
+            _jwtTokenGenerator.ExpiresInSeconds,
+            new UsuarioActualDto(
+                user.Id,
+                user.Nombre,
+                user.Email,
+                user.Role,
+                user.CompanyId,
+                user.CompanyName));
     }
 }

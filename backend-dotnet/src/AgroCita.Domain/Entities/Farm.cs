@@ -1,8 +1,12 @@
+using AgroCita.Domain.Common;
+
 namespace AgroCita.Domain.Entities;
 
-public class Farm
+public class Farm : ITenantEntity
 {
     public int Id { get; set; }
+
+    public int EmpresaId { get; set; }
 
     public int ProductorId { get; set; }
 
@@ -14,7 +18,7 @@ public class Farm
 
     public string Ubicacion { get; set; } = string.Empty;
 
-    public decimal AreaManzanas { get; set; }
+    public decimal? AreaManzanas { get; set; }
 
     public string? Descripcion { get; set; }
 

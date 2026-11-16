@@ -1,8 +1,11 @@
 
+using System.Text.Json.Serialization;
 using AgroCita.Infrastructure;
 using AgroCita.Infrastructure.Persistence.Context;
+using AgroCita.Infrastructure.Persistence.Seed;
 using AgroCita.Application;
 using AgroCita.API.Extensions;
+using AgroCita.API.Filters;
 using AgroCita.API.Middleware;
 using Scalar.AspNetCore;
 
@@ -12,7 +15,28 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
-builder.Services.AddControllers();
+builder.Services
+    .AddControllers(options =>
+    {
+        options.Filters.Add<SuscripcionActivaFilter>();
+        options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
+    })
+    .AddJsonOptions(options =>
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()))
+    .ConfigureApiBehaviorOptions(options =>
+        options.InvalidModelStateResponseFactory = context =>
+            ErrorResponses.FromModelState(context.ModelState));
+
+var allowedOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>() ?? [];
+
+builder.Services.AddCors(options =>
+    options.AddDefaultPolicy(policy => policy
+        .WithOrigins(allowedOrigins)
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .WithExposedHeaders("Location")));
 
 // Configuración de OpenAPI y autenticación Bearer.
 builder.Services.AddOpenApi(options =>
@@ -68,6 +92,8 @@ builder.Services.AddJwtAuthentication(builder.Configuration);
 
 var app = builder.Build();
 
+await DbInitializer.InitializeAsync(app.Services, app.Configuration);
+
 // Página principal.
 app.MapGet("/", () =>
 {
@@ -108,9 +134,11 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+
 app.UseHttpsRedirection();
 
-app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseCors();
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -118,4 +146,3 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
-

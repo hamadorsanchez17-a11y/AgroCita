@@ -1,4 +1,5 @@
 using System.Text;
+using AgroCita.API.Middleware;
 using AgroCita.Infrastructure.Services.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -33,6 +34,8 @@ public static class AuthenticationExtensions
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
+                options.MapInboundClaims = false;
+
                 options.TokenValidationParameters =
                     new TokenValidationParameters
                     {
@@ -47,8 +50,31 @@ public static class AuthenticationExtensions
                             Encoding.UTF8.GetBytes(jwtSettings.SecretKey)),
 
                         ValidateLifetime = true,
-                        ClockSkew = TimeSpan.FromSeconds(30)
+                        ClockSkew = TimeSpan.FromSeconds(30),
+
+                        NameClaimType = JwtClaims.UsuarioId,
+                        RoleClaimType = JwtClaims.Rol
                     };
+
+                options.Events = new JwtBearerEvents
+                {
+                    OnChallenge = context =>
+                    {
+                        context.HandleResponse();
+
+                        return ErrorResponses.WriteAsync(
+                            context.HttpContext,
+                            StatusCodes.Status401Unauthorized,
+                            "No autenticado",
+                            "Debe iniciar sesión para continuar.");
+                    },
+                    OnForbidden = context =>
+                        ErrorResponses.WriteAsync(
+                            context.HttpContext,
+                            StatusCodes.Status403Forbidden,
+                            "Acceso denegado",
+                            "Su rol no tiene permiso para realizar esta acción.")
+                };
             });
 
         services.AddAuthorization();

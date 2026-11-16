@@ -13,14 +13,14 @@ public class CurrentUserService : ICurrentUserService
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public int? EmpresaId
-    {
-        get
-        {
-            var empresaId = _httpContextAccessor.HttpContext?
-                .User.FindFirst("company_id")?.Value;
+    private ClaimsPrincipal? User => _httpContextAccessor.HttpContext?.User;
 
-            return int.TryParse(empresaId, out var id) ? id : null;
-        }
-    }
+    public int? UsuarioId => Entero(JwtClaims.UsuarioId);
+
+    public string? Rol => User?.FindFirst(JwtClaims.Rol)?.Value;
+
+    public int? EmpresaId => Entero(JwtClaims.EmpresaId);
+
+    private int? Entero(string claim) =>
+        int.TryParse(User?.FindFirst(claim)?.Value, out var valor) ? valor : null;
 }

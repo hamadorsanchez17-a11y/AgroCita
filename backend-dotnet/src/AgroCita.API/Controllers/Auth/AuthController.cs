@@ -1,35 +1,51 @@
 
 using AgroCita.API.Contracts.Requests.Auth;
-using AgroCita.API.Contracts.Responses.Auth;
+using AgroCita.API.Filters;
+using AgroCita.API.Middleware;
+using AgroCita.Application.Features.Auth;
 using AgroCita.Application.Features.Auth.Login;
-using AgroCita.Infrastructure.Services.Security;
+using AgroCita.Application.Features.Auth.Me;
+using AgroCita.Application.Features.Auth.RegistroProductor;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
 
 namespace AgroCita.API.Controllers.Auth;
-
-/*Controlador para el endpoint REST
-POST /api/auth/login*/
 
 [ApiController]
 [Route("api/auth")]
 public class AuthController : ControllerBase
 {
     private readonly LoginHandler _loginHandler;
-    private readonly JwtSettings _jwtSettings;
+    private readonly RegistroProductorHandler _registroHandler;
+    private readonly ObtenerUsuarioActualHandler _usuarioActualHandler;
 
     public AuthController(
         LoginHandler loginHandler,
-        IOptions<JwtSettings> jwtOptions)
+        RegistroProductorHandler registroHandler,
+        ObtenerUsuarioActualHandler usuarioActualHandler)
     {
         _loginHandler = loginHandler;
-        _jwtSettings = jwtOptions.Value;
+        _registroHandler = registroHandler;
+        _usuarioActualHandler = usuarioActualHandler;
+    }
+
+    [HttpPost("registro-productor")]
+    [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> RegistrarProductor(
+        [FromBody] RegistroProductorDto request,
+        CancellationToken cancellationToken)
+    {
+        var response = await _registroHandler.HandleAsync(request, cancellationToken);
+
+        return Created("/api/auth/me", response);
     }
 
     [HttpPost("login")]
-    [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Login(
         [FromBody] LoginRequest request,
         CancellationToken cancellationToken)
@@ -46,19 +62,24 @@ public class AuthController : ControllerBase
 
         if (result is null)
         {
-            return Unauthorized(new
-            {
-                message = "Correo electrónico o contraseña incorrectos."
-            });
+            return Unauthorized(new ErrorResponse(
+                "Credenciales incorrectas",
+                StatusCodes.Status401Unauthorized,
+                "Correo electrónico o contraseña incorrectos."));
         }
 
-        var response = new LoginResponse
-        {
-            AccessToken = result.AccessToken,
-            TokenType = "Bearer",
-            ExpiresInSeconds = _jwtSettings.ExpirationMinutes * 60
-        };
+        return Ok(new AuthResponseDto(
+            result.AccessToken,
+            result.ExpiresInSeconds,
+            result.Usuario));
+    }
 
-        return Ok(response);
+    [HttpGet("me")]
+    [Authorize]
+    [SinValidarSuscripcion]
+    [ProducesResponseType(typeof(UsuarioActualDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> Me(CancellationToken cancellationToken)
+    {
+        return Ok(await _usuarioActualHandler.HandleAsync(cancellationToken));
     }
 }

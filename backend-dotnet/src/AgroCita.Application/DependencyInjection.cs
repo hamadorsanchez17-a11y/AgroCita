@@ -1,4 +1,3 @@
-using AgroCita.Application.Features.Auth.Login;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -8,9 +7,19 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
-        services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
+        var assembly = typeof(DependencyInjection).Assembly;
 
-        services.AddScoped<LoginHandler>();
+        services.AddValidatorsFromAssembly(assembly);
+
+        var casosDeUso = assembly.GetTypes().Where(t =>
+            t is { IsClass: true, IsAbstract: false, IsNested: false } &&
+            (t.Name.EndsWith("Handler") ||
+             t.Namespace == "AgroCita.Application.Common.Services"));
+
+        foreach (var tipo in casosDeUso)
+        {
+            services.AddScoped(tipo);
+        }
 
         return services;
     }
