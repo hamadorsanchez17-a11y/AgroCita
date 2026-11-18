@@ -56,7 +56,7 @@ public class JwtTokenGeneratorTests
             token.Claims.First(c => c.Type == ClaimTypes.Role).Value);
 
         Assert.Equal(companyId.ToString(),
-            token.Claims.First(c => c.Type == "company_id").Value);
+            token.Claims.First(c => c.Type == "EmpresaId").Value);
     }
 
     [Fact]
@@ -74,8 +74,8 @@ public class JwtTokenGeneratorTests
 
         // Assert
         Assert.DoesNotContain(
-            token.Claims,
-            claim => claim.Type == "company_id");
+        token.Claims,
+        claim => claim.Type == "EmpresaId");
     }
 
     [Fact]

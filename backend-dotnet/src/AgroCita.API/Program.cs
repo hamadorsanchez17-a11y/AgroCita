@@ -6,6 +6,22 @@ using AgroCita.API.Extensions;
 using AgroCita.API.Middleware;
 using Scalar.AspNetCore;
 
+var directorio = new DirectoryInfo(Directory.GetCurrentDirectory());
+
+while (directorio != null &&
+       !File.Exists(Path.Combine(directorio.FullName, ".env")))
+{
+    directorio = directorio.Parent;
+}
+
+if (directorio == null)
+{
+    throw new FileNotFoundException(
+        "No se encontró el archivo .env.");
+}
+
+DotNetEnv.Env.Load(Path.Combine(directorio.FullName, ".env"));
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Registrar servicios.

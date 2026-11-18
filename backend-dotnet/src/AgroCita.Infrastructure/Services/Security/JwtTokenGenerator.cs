@@ -31,7 +31,7 @@ public class JwtTokenGenerator : IJwtTokenGenerator
 
         if (companyId.HasValue)
         {
-            claims.Add(new Claim("company_id", companyId.Value.ToString()));
+            claims.Add(new Claim("EmpresaId", companyId.Value.ToString()));
         }
 
         var key = new SymmetricSecurityKey(

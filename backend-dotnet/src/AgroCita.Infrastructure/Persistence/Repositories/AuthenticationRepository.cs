@@ -26,7 +26,7 @@ public class AuthenticationRepository : IAuthenticationRepository
                 Id = user.Id,
                 Email = user.Email,
                 PasswordHash = user.PasswordHash,
-                Role = user.Rol,
+                Role = user.Rol != null ? user.Rol.Nombre : string.Empty,
                 CompanyId = user.EmpresaId,
                 IsActive = user.Activo
             })
